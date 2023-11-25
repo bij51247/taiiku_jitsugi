@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Vue.js カスタムシークバー付き動画プレイヤー</title>
+  <style>
+    .videos-container {
+      display: flex;
+      /* Flexboxコンテナにする */
+      align-items: flex-start;
+      /* アイテムを上端に揃える */
+      justify-content: center;
+      /* アイテムを中央に揃える */
+      gap: 20px;
+      /* 動画間の隙間を設定 */
+      margin-bottom: 20px;
+      /* 下部の要素との間隔を設ける */
+    }
+
+    .video-container {
+      width: 320px;
+      margin-bottom: 30px;
+      /* シークバーとファイルアップロードボタン用の余白 */
+    }
+
+    .video-box {
+      position: relative;
+      padding-bottom: 20px;
+      /* シークバー用のスペースを保持 */
+    }
+
+    video {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .seek-bar {
+      width: 100%;
+      height: 20px;
+      margin-top: 5px;
+      /* シークバーの上部余白を設定 */
+      background: rgba(0, 0, 0, 0.5);
+    }
+
+    .seek-bar input[type="range"] {
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      background: transparent;
+      -webkit-appearance: none;
+      /* スライダーのデフォルトスタイリングを削除 */
+      appearance: none;
+    }
+
+    .seek-bar input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .seek-bar input[type="range"]::-moz-range-thumb {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    /* 追加されたプレースホルダーのスタイル */
+    .video-placeholder {
+      width: 320px;
+      height: 180px;
+      background-color: #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+      font-size: 20px;
+    }
+
+    /* ファイルアップロードボタンのスタイル */
+    .file-upload-input {
+      margin-top: 10px;
+      /* ここで余白を調整できます */
+      width: 320px;
+      /* video-container と同じ幅 */
+    }
+  </style>
+  <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
+</head>
+
+<body>
+  <div id="app">
+    <div class="videos-container">
+      <!-- 埋め込み動画のコンテナ -->
+      <div class="video-container">
+        <video ref="embeddedVideo" src="example.mp4" @loadedmetadata="initializeSeekBar('embedded')"
+          @timeupdate="updateSeekBar('embedded')">
+          Your browser does not support HTML5 video.
+        </video>
+        <div class="seek-bar">
+          <input type="range" min="0" :max="embeddedMax" :value="embeddedCurrent"
+            @input="setPosition($event, 'embedded')" step="any">
+        </div>
+      </div>
+
+      <!-- アップロードされた動画のコンテナまたは灰色の四角形とその下にファイルアップロード -->
+      <div class="video-container">
+        <template v-if="!videoSrc">
+          <div class="video-placeholder">動画をアップロードしてください</div>
+          <input type="file" @change="handleFileChange" accept="video/*" class="file-upload-input">
+        </template>
+        <template v-else>
+          <video ref="uploadedVideo" :src="videoSrc" @loadedmetadata="initializeSeekBar('uploaded')"
+            @timeupdate="updateSeekBar('uploaded')">
+            Your browser does not support HTML5 video.
+          </video>
+          <div class="seek-bar">
+            <input type="range" min="0" :max="uploadedMax" :value="uploadedCurrent"
+              @input="setPosition($event, 'uploaded')" step="any">
+          </div>
+          <!-- ファイルアップロードボタンをシークバーの下に移動 -->
+          <input type="file" @change="handleFileChange" accept="video/*" class="file-upload-input">
+        </template>
+      </div>
+    </div>
+
+    <!-- コントロールボタン -->
+    <div style="text-align: center;">
+      <button @click="playBothVideos">同時再生</button>
+      <button @click="pauseBothVideos">同時ポーズ</button>
+    </div>
+
+
+
+    <script src="app.js"></script>
+</body>
+
+</html>

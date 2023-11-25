@@ -1,0 +1,54 @@
+.videos-container {
+    display: flex; /* Flexboxコンテナにする */
+    align-items: flex-start; /* アイテムを上端に揃える */
+    justify-content: center; /* アイテムを中央に揃える */
+    gap: 20px; /* 動画間の隙間を設定 */
+    margin-bottom: 20px; /* 下部の要素との間隔を設ける */
+  }
+
+  .video-container {
+    position: relative;
+    width: 320px; /* 320pxはここでは例として挙げています。適切な幅に調整してください。 */
+    padding-bottom: 20px; /* シークバーのための余白を確保 */
+  }
+
+  video {
+    width: 100%;
+    height: auto;
+  }
+
+  .seek-bar {
+    position: absolute;
+    bottom: 0; /* シークバーの位置を動画下部に合わせる */
+    left: 0;
+    width: 100%;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.5); /* 半透明の背景 */
+  }
+
+  .seek-bar input[type="range"] {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    background: transparent;
+    -webkit-appearance: none; /* スライダーのデフォルトスタイリングを削除 */
+    appearance: none;
+  }
+
+  .seek-bar input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+  }
+
+  .seek-bar input[type="range"]::-moz-range-thumb {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+  }
