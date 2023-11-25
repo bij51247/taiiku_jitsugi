@@ -110,36 +110,53 @@
         </div>
       </div>
 
-      <!-- アップロードされた動画のコンテナまたは灰色の四角形とその下にファイルアップロード -->
-      <div class="video-container">
-        <template v-if="!videoSrc">
-          <div class="video-placeholder">動画をアップロードしてください</div>
-          <input type="file" @change="handleFileChange" accept="video/*" class="file-upload-input">
-        </template>
-        <template v-else>
-          <video ref="uploadedVideo" :src="videoSrc" @loadedmetadata="initializeSeekBar('uploaded')"
-            @timeupdate="updateSeekBar('uploaded')">
-            Your browser does not support HTML5 video.
-          </video>
-          <div class="seek-bar">
-            <input type="range" min="0" :max="uploadedMax" :value="uploadedCurrent"
-              @input="setPosition($event, 'uploaded')" step="any">
+      <!DOCTYPE html>
+      <html lang="ja">
+
+      <head>
+        <meta charset="UTF-8">
+        <title>Vue.js カスタムシークバー付き動画プレイヤー</title>
+        <style>
+          /* ここにスタイルを追加 */
+        </style>
+        <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
+      </head>
+
+      <body>
+        <div id="app">
+          <div class="videos-container">
+            <!-- 埋め込み動画のコンテナ -->
+            <!-- ... -->
+
+            <!-- アップロードされた動画のコンテナまたは灰色の四角形とその下にファイルアップロード -->
+            <div class="video-container">
+              <!-- 常にシークバーを表示する (動画がアップロードされていない場合は無効化) -->
+              <template>
+                <div v-if="!videoSrc" class="video-placeholder">動画をアップロードしてください</div>
+                <video v-else ref="uploadedVideo" :src="videoSrc" @loadedmetadata="initializeSeekBar('uploaded')"
+                  @timeupdate="updateSeekBar('uploaded')">
+                  Your browser does not support HTML5 video.
+                </video>
+                <div class="seek-bar">
+                  <!-- 動画がない場合はrangeを無効化する -->
+                  <input type="range" min="0" :max="videoSrc ? uploadedMax : 100"
+                    :value="videoSrc ? uploadedCurrent : 0" @input="videoSrc && setPosition($event, 'uploaded')"
+                    :disabled="!videoSrc" step="any">
+                </div>
+              </template>
+              <input type="file" @change="handleFileChange" accept="video/*" class="file-upload-input">
+            </div>
           </div>
-          <!-- ファイルアップロードボタンをシークバーの下に移動 -->
-          <input type="file" @change="handleFileChange" accept="video/*" class="file-upload-input">
-        </template>
-      </div>
-    </div>
 
-    <!-- コントロールボタン -->
-    <div style="text-align: center;">
-      <button @click="playBothVideos">同時再生</button>
-      <button @click="pauseBothVideos">同時ポーズ</button>
-    </div>
+          <!-- コントロールボタン -->
+          <div style="text-align: center;">
+            <button @click="playBothVideos">同時再生</button>
+            <button @click="pauseBothVideos">同時ポーズ</button>
+          </div>
 
 
 
-    <script src="app.js"></script>
-</body>
+          <script src="app.js"></script>
+      </body>
 
-</html>
+      </html>
