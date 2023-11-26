@@ -91,6 +91,20 @@
       width: 320px;
       /* video-container と同じ幅 */
     }
+
+    .starting-pin {
+      position: absolute;
+      top: -10px;
+      /* Adjust this value to match the seek bar's vertical position */
+      width: 100%;
+      pointer-events: none;
+      /* Makes it non-interactive until JS makes it draggable */
+    }
+
+    /* Make the pin draggable */
+    .starting-pin.interactive {
+      pointer-events: auto;
+    }
   </style>
   <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
 </head>
@@ -100,16 +114,19 @@
     <div class="videos-container">
       <!-- 埋め込み動画のコンテナ -->
       <div class="video-container">
-        <video ref="embeddedVideo" src="example.mp4" @loadedmetadata="initializeSeekBar('embedded')"
+        <video ref="embeddedVideo" :src="embeddedVideoSrc" @loadedmetadata="initializeSeekBar('embedded')"
           @timeupdate="updateSeekBar('embedded')">
           Your browser does not support HTML5 video.
         </video>
         <div class="seek-bar">
           <input type="range" min="0" :max="embeddedMax" :value="embeddedCurrent"
             @input="setPosition($event, 'embedded')" step="any">
+          <input type="range" class="starting-pin" min="0" :max="embeddedMax" :value="embeddedStart"
+            @input="setStartingPosition($event, 'embedded')" step="any">
         </div>
+        <!-- 埋め込み動画用のファイルアップロード部分を追加 -->
+        <input type="file" @change="handleEmbeddedFileChange" accept="video/*" class="file-upload-input">
       </div>
-
 
       <!-- アップロードされた動画のコンテナまたは灰色の四角形とその下にファイルアップロード -->
       <div class="video-container">
@@ -122,13 +139,10 @@
           </video>
           <div class="seek-bar">
             <!-- 動画がない場合はrangeを無効化する -->
-            <input type="range" 
-                   min="0" 
-                   :max="videoSrc ? uploadedMax : 100" 
-                   :value="videoSrc ? uploadedCurrent : 0" 
-                   @input="videoSrc && setPosition($event, 'uploaded')"
-                   :disabled="!videoSrc"
-                   step="any">
+            <input type="range" min="0" :max="videoSrc ? uploadedMax : 100" :value="videoSrc ? uploadedCurrent : 0"
+              @input="videoSrc && setPosition($event, 'uploaded')" :disabled="!videoSrc" step="any">
+            <input type="range" class="starting-pin" min="0" :max="embeddedMax" :value="embeddedStart"
+              @input="setStartingPosition($event, 'embedded')" step="any">
           </div>
         </template>
         <input type="file" @change="handleFileChange" accept="video/*" class="file-upload-input">
