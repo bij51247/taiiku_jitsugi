@@ -92,18 +92,18 @@
       /* video-container と同じ幅 */
     }
 
-    .starting-pin {
-      position: absolute;
-      top: -10px;
-      /* Adjust this value to match the seek bar's vertical position */
-      width: 100%;
-      pointer-events: none;
-      /* Makes it non-interactive until JS makes it draggable */
-    }
+    .start-pin {
+      position: relative;
+      left: 0%;
 
-    /* Make the pin draggable */
-    .starting-pin.interactive {
-      pointer-events: auto;
+      width: 5px;
+      /* 幅を調整して棒の太さを変更できます */
+      height: 30px;
+      /* 高さを10pxに設定 */
+      top: -30px;
+      /* 高さをシークバー全体に広げます */
+      background-color: blue;
+      /* 色を青に設定 */
     }
   </style>
   <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
@@ -121,8 +121,7 @@
         <div class="seek-bar">
           <input type="range" min="0" :max="embeddedMax" :value="embeddedCurrent"
             @input="setPosition($event, 'embedded')" step="any">
-          <input type="range" class="starting-pin" min="0" :max="embeddedMax" :value="embeddedStart"
-            @input="setStartingPosition($event, 'embedded')" step="any">
+          <div class="start-pin embedded-pin"></div> <!-- ここに新しい要素を追加 -->
         </div>
         <!-- 埋め込み動画用のファイルアップロード部分を追加 -->
         <input type="file" @change="handleEmbeddedFileChange" accept="video/*" class="file-upload-input">
@@ -141,8 +140,7 @@
             <!-- 動画がない場合はrangeを無効化する -->
             <input type="range" min="0" :max="videoSrc ? uploadedMax : 100" :value="videoSrc ? uploadedCurrent : 0"
               @input="videoSrc && setPosition($event, 'uploaded')" :disabled="!videoSrc" step="any">
-            <input type="range" class="starting-pin" min="0" :max="embeddedMax" :value="embeddedStart"
-              @input="setStartingPosition($event, 'embedded')" step="any">
+            <div class="start-pin uploaded-pin"></div> <!-- ここに新しい要素を追加 -->
           </div>
         </template>
         <input type="file" @change="handleFileChange" accept="video/*" class="file-upload-input">
@@ -157,7 +155,146 @@
 
 
 
-    <script src="app.js"></script>
+    <script>
+      new Vue({
+        el: '#app',
+        data: {
+          videoSrc: null,
+          embeddedCurrent: 0,
+          embeddedMax: 0,
+          uploadedCurrent: 0,
+          uploadedMax: 0,
+          embeddedVideoSrc: 'example.mp4', // 埋め込み動画のデフォルトソース
+          embeddedStart: 0,
+          uploadedStart: 0,
+          dragging: false,
+          startPinPosition: 0
+        },
+        methods: {
+          handleFileChange(event) {
+            const file = event.target.files[0];
+            if (file) {
+              this.videoSrc = URL.createObjectURL(file);
+              const uploadedVideoPlayer = this.$refs.uploadedVideo;
+              if (uploadedVideoPlayer) {
+                uploadedVideoPlayer.load();
+              }
+            }
+          },
+          playBothVideos() {
+            const embeddedVideoPlayer = this.$refs.embeddedVideo;
+            const uploadedVideoPlayer = this.$refs.uploadedVideo;
+            if (embeddedVideoPlayer && uploadedVideoPlayer) {
+              embeddedVideoPlayer.play();
+              uploadedVideoPlayer.play();
+            }
+          },
+          pauseBothVideos() {
+            const embeddedVideoPlayer = this.$refs.embeddedVideo;
+            const uploadedVideoPlayer = this.$refs.uploadedVideo;
+            if (embeddedVideoPlayer && uploadedVideoPlayer) {
+              embeddedVideoPlayer.pause();
+              uploadedVideoPlayer.pause();
+            }
+          },
+          updateSeekBar(videoType) {
+            const videoPlayer = this.$refs[`${videoType}Video`];
+            if (videoPlayer) {
+              this[`${videoType}Current`] = videoPlayer.currentTime;
+              this[`${videoType}Max`] = videoPlayer.duration;
+            }
+          },
+          initializeSeekBar(videoType) {
+            const videoPlayer = this.$refs[`${videoType}Video`];
+            if (videoPlayer) {
+              this[`${videoType}Max`] = videoPlayer.duration;
+            }
+          },
+          setPosition(event, videoType) {
+            const videoPlayer = this.$refs[`${videoType}Video`];
+            const value = event.target.value;
+            if (videoPlayer && value != null) {
+              videoPlayer.currentTime = value;
+            }
+          },
+          handleEmbeddedFileChange(event) {
+            const file = event.target.files[0];
+            if (file) {
+              this.embeddedVideoSrc = URL.createObjectURL(file);
+              const embeddedVideoPlayer = this.$refs.embeddedVideo;
+              if (embeddedVideoPlayer) {
+                embeddedVideoPlayer.load();
+              }
+            }
+          },
+          setStartingPosition(event, videoType) {
+            const value = parseFloat(event.target.value);
+            this[`${videoType}Start`] = value;
+            // Make the video start from the pin's position when played
+            const videoPlayer = this.$refs[`${videoType}Video`];
+            if (videoPlayer) {
+              videoPlayer.currentTime = value;
+            }
+
+            // Optionally, if you want the video to start playing immediately from the pin position
+            if (!videoPlayer.paused) {
+              videoPlayer.play();
+            }
+          },
+
+          dragStart: function (event) {
+            this.dragging = true;
+            // ここでは、startPinPosition を設定する代わりに、drag メソッド内で計算を行います。
+            this.activePin = event.target.classList.contains('embedded-pin') ? 'embedded' : 'uploaded';
+          },
+          dragEnd: function () {
+            this.dragging = false;
+          },
+          drag: function (event) {
+            if (!this.dragging) return;
+            // スタートピンに該当するシークバーを選択
+            var seekBar = this.activePin === 'embedded'
+              ? this.$el.querySelector('.embedded-pin').parentNode // 埋め込み動画のシークバーを選択
+              : this.$el.querySelector('.uploaded-pin').parentNode; // アップロードされた動画のシークバーを選択
+            var seekBarRect = seekBar.getBoundingClientRect();
+
+            // シークバーの範囲内でのマウスカーソルの位置を計算
+            var newLeft = (event.clientX - seekBarRect.left) / seekBarRect.width * 100;
+            newLeft = Math.min(Math.max(newLeft, 0), 100);
+
+            // スタートピンのスタイルを更新
+            var startPin = this.activePin === 'embedded'
+              ? this.$el.querySelector('.embedded-pin') // 埋め込み動画のピンを選択
+              : this.$el.querySelector('.uploaded-pin'); // アップロードされた動画のピンを選択
+            startPin.style.left = newLeft + '%';
+
+            // プログレスバーの位置を更新（実際には動画の再生位置をセットする部分の実装が必要です）
+            this[`${this.activePin}Start`] = newLeft;
+          }
+        },
+        mounted: function () {
+          var embeddedPin = this.$el.querySelector('.embedded-pin');
+          var uploadedPin = this.$el.querySelector('.uploaded-pin');
+          // 以下のリスナーを追加します。
+          embeddedPin.addEventListener('mousedown', this.dragStart);
+          uploadedPin.addEventListener('mousedown', this.dragStart);
+          document.addEventListener('mousemove', this.drag);
+          document.addEventListener('mouseup', this.dragEnd);
+        },
+        beforeDestroy: function () {
+          var embeddedPin = this.$el.querySelector('.embedded-pin');
+          var uploadedPin = this.$el.querySelector('.uploaded-pin');
+          // 以下のリスナーを削除します。
+          embeddedPin.removeEventListener('mousedown', this.dragStart);
+          uploadedPin.removeEventListener('mousedown', this.dragStart);
+          document.removeEventListener('mousemove', this.drag);
+          document.removeEventListener('mouseup', this.dragEnd);
+        }
+      });
+
+
+
+    </script>
 </body>
 
 </html>
