@@ -185,7 +185,12 @@
             const embeddedVideoPlayer = this.$refs.embeddedVideo;
             const uploadedVideoPlayer = this.$refs.uploadedVideo;
             if (embeddedVideoPlayer && uploadedVideoPlayer) {
+              // 埋め込み動画の再生位置を設定
+              embeddedVideoPlayer.currentTime = this.embeddedStart / 100 * embeddedVideoPlayer.duration;
               embeddedVideoPlayer.play();
+
+              // アップロードされた動画の再生位置を設定
+              uploadedVideoPlayer.currentTime = this.uploadedStart / 100 * uploadedVideoPlayer.duration;
               uploadedVideoPlayer.play();
             }
           },
@@ -200,6 +205,10 @@
           updateSeekBar(videoType) {
             const videoPlayer = this.$refs[`${videoType}Video`];
             if (videoPlayer) {
+              // スタートピンの位置より前には移動しないようにする
+              if (videoPlayer.currentTime < this[`${videoType}Start`] / 100 * videoPlayer.duration) {
+                videoPlayer.currentTime = this[`${videoType}Start`] / 100 * videoPlayer.duration;
+              }
               this[`${videoType}Current`] = videoPlayer.currentTime;
               this[`${videoType}Max`] = videoPlayer.duration;
             }
@@ -270,6 +279,14 @@
 
             // プログレスバーの位置を更新（実際には動画の再生位置をセットする部分の実装が必要です）
             this[`${this.activePin}Start`] = newLeft;
+
+
+
+            // 対応する動画の再生位置をスタートピンの位置に設定する
+            const videoPlayer = this.$refs[`${this.activePin}Video`];
+            if (videoPlayer) {
+              videoPlayer.currentTime = videoPlayer.duration * (newLeft / 100);
+            }
           }
         },
         mounted: function () {
