@@ -261,31 +261,27 @@
           },
           drag: function (event) {
             if (!this.dragging) return;
-            // スタートピンに該当するシークバーを選択
+
             var seekBar = this.activePin === 'embedded'
-              ? this.$el.querySelector('.embedded-pin').parentNode // 埋め込み動画のシークバーを選択
-              : this.$el.querySelector('.uploaded-pin').parentNode; // アップロードされた動画のシークバーを選択
+              ? this.$el.querySelector('.embedded-pin').parentNode
+              : this.$el.querySelector('.uploaded-pin').parentNode;
             var seekBarRect = seekBar.getBoundingClientRect();
 
-            // シークバーの範囲内でのマウスカーソルの位置を計算
             var newLeft = (event.clientX - seekBarRect.left) / seekBarRect.width * 100;
             newLeft = Math.min(Math.max(newLeft, 0), 100);
 
-            // スタートピンのスタイルを更新
             var startPin = this.activePin === 'embedded'
-              ? this.$el.querySelector('.embedded-pin') // 埋め込み動画のピンを選択
-              : this.$el.querySelector('.uploaded-pin'); // アップロードされた動画のピンを選択
+              ? this.$el.querySelector('.embedded-pin')
+              : this.$el.querySelector('.uploaded-pin');
             startPin.style.left = newLeft + '%';
 
-            // プログレスバーの位置を更新（実際には動画の再生位置をセットする部分の実装が必要です）
             this[`${this.activePin}Start`] = newLeft;
 
-
-
-            // 対応する動画の再生位置をスタートピンの位置に設定する
             const videoPlayer = this.$refs[`${this.activePin}Video`];
             if (videoPlayer) {
               videoPlayer.currentTime = videoPlayer.duration * (newLeft / 100);
+              // Update the range input's value as well
+              this[`${this.activePin}Current`] = videoPlayer.currentTime;
             }
           }
         },
