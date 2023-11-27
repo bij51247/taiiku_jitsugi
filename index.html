@@ -115,7 +115,7 @@
       <!-- 埋め込み動画のコンテナ -->
       <div class="video-container">
         <video ref="embeddedVideo" :src="embeddedVideoSrc" @loadedmetadata="initializeSeekBar('embedded')"
-          @timeupdate="updateSeekBar('embedded')">
+          @timeupdate="updateSeekBar('embedded')" :loop="loop">
           Your browser does not support HTML5 video.
         </video>
         <div class="seek-bar">
@@ -133,7 +133,7 @@
         <template>
           <div v-if="!videoSrc" class="video-placeholder">動画をアップロードしてください</div>
           <video v-else ref="uploadedVideo" :src="videoSrc" @loadedmetadata="initializeSeekBar('uploaded')"
-            @timeupdate="updateSeekBar('uploaded')">
+            @timeupdate="updateSeekBar('uploaded')" :loop="loop">
             Your browser does not support HTML5 video.
           </video>
           <div class="seek-bar">
@@ -151,6 +151,10 @@
     <div style="text-align: center;">
       <button @click="playBothVideos">同時再生</button>
       <button @click="pauseBothVideos">同時ポーズ</button>
+      <label class="switch">
+        <input type="checkbox" v-model="loop">
+        <span class="slider round"></span>
+      </label>
     </div>
 
 
@@ -168,7 +172,8 @@
           embeddedStart: 0,
           uploadedStart: 0,
           dragging: false,
-          startPinPosition: 0
+          startPinPosition: 0,
+          loop: false,
         },
         methods: {
           handleFileChange(event) {
