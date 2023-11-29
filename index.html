@@ -19,6 +19,8 @@
     }
 
     .video-container {
+      position: relative;
+      /* この行を追加 */
       width: 320px;
       margin-bottom: 30px;
       /* シークバーとファイルアップロードボタン用の余白 */
@@ -26,7 +28,8 @@
 
     .video-box {
       position: relative;
-      padding-bottom: 20px;
+      display: inline-block;
+      /* padding-bottom: 20px; */
       /* シークバー用のスペースを保持 */
     }
 
@@ -105,6 +108,33 @@
       background-color: blue;
       /* 色を青に設定 */
     }
+
+    .video-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      /* この行を追加 */
+      height: 100%;
+      /* この行を追加 */
+      background-color: rgba(0, 0, 0, 0.5);
+      transition: opacity 0.5s ease;
+    }
+
+    .pause-button {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 48px;
+      color: white;
+      transition: opacity 0.5s ease;
+    }
+
+    .video-box {
+      position: relative;
+      /* 他のスタイルが必要な場合はここに追加 */
+    }
   </style>
   <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
 </head>
@@ -112,12 +142,17 @@
 <body>
   <div id="app">
     <div class="videos-container">
-      <!-- 埋め込み動画のコンテナ -->
+
       <div class="video-container">
-        <video ref="embeddedVideo" :src="embeddedVideoSrc" @loadedmetadata="initializeSeekBar('embedded')"
-          @timeupdate="updateSeekBar('embedded')" :loop="loop">
-          Your browser does not support HTML5 video.
-        </video>
+        <div class="video-box">
+          <video ref="embeddedVideo" :src="embeddedVideoSrc" @loadedmetadata="initializeSeekBar('embedded')"
+            @timeupdate="updateSeekBar('embedded')" :loop="loop" @click="toggleOverlay('embedded')">
+            Your browser does not support HTML5 video.
+          </video>
+          <div class="video-overlay" v-show="embeddedOverlayVisible"></div>
+          <div class="pause-button" v-show="embeddedOverlayVisible">⏸️</div>
+        </div>
+
         <div class="seek-bar">
           <input type="range" min="0" :max="embeddedMax" :value="embeddedCurrent"
             @input="setPosition($event, 'embedded')" step="any">
@@ -127,15 +162,18 @@
         <input type="file" @change="handleEmbeddedFileChange" accept="video/*" class="file-upload-input">
       </div>
 
-      <!-- アップロードされた動画のコンテナまたは灰色の四角形とその下にファイルアップロード -->
+      <!-- アップロードされた動画のコンテナ -->
       <div class="video-container">
-        <!-- 常にシークバーを表示する (動画がアップロードされていない場合は無効化) -->
         <template>
-          <div v-if="!videoSrc" class="video-placeholder">動画をアップロードしてください</div>
-          <video v-else ref="uploadedVideo" :src="videoSrc" @loadedmetadata="initializeSeekBar('uploaded')"
-            @timeupdate="updateSeekBar('uploaded')" :loop="loop">
-            Your browser does not support HTML5 video.
-          </video>
+          <div class="video-box">
+            <div v-if="!videoSrc" class="video-placeholder">動画をアップロードしてください</div>
+            <video v-else ref="uploadedVideo" :src="videoSrc" @loadedmetadata="initializeSeekBar('uploaded')"
+              @timeupdate="updateSeekBar('uploaded')" :loop="loop" @click="toggleOverlay('uploaded')">
+              Your browser does not support HTML5 video.
+            </video>
+            <div class="video-overlay" v-show="uploadedOverlayVisible"></div>
+            <div class="pause-button" v-show="uploadedOverlayVisible">⏸️</div>
+          </div>
           <div class="seek-bar">
             <!-- 動画がない場合はrangeを無効化する -->
             <input type="range" min="0" :max="videoSrc ? uploadedMax : 100" :value="videoSrc ? uploadedCurrent : 0"
@@ -178,6 +216,9 @@
           dragging: false,
           startPinPosition: 0,
           loop: false,
+          embeddedOverlayVisible: false,
+          uploadedOverlayVisible: false,
+          overlayTimeout: null,
         },
         methods: {
           handleFileChange(event) {
@@ -202,6 +243,13 @@
               uploadedVideoPlayer.currentTime = this.uploadedStart / 100 * uploadedVideoPlayer.duration;
               uploadedVideoPlayer.play();
             }
+          },
+          toggleOverlay(videoType) {
+            this[`${videoType}OverlayVisible`] = !this[`${videoType}OverlayVisible`];
+            clearTimeout(this.overlayTimeout);
+            this.overlayTimeout = setTimeout(() => {
+              this[`${videoType}OverlayVisible`] = false;
+            }, 1000); // 3秒後にフェードアウト
           },
           changePlaybackRate(event) {
             const rate = event.target.value;
