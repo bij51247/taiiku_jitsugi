@@ -29,7 +29,6 @@
     .video-box {
       position: relative;
       display: inline-block;
-      /* padding-bottom: 20px; */
       /* シークバー用のスペースを保持 */
     }
 
@@ -150,7 +149,7 @@
             Your browser does not support HTML5 video.
           </video>
           <div class="video-overlay" v-show="embeddedOverlayVisible"></div>
-          <div class="pause-button" v-show="embeddedOverlayVisible">⏸️</div>
+          <div class="pause-button" v-show="embeddedOverlayVisible" @click="togglePlayPause('embedded')">⏸️</div>
         </div>
 
         <div class="seek-bar">
@@ -172,7 +171,7 @@
               Your browser does not support HTML5 video.
             </video>
             <div class="video-overlay" v-show="uploadedOverlayVisible"></div>
-            <div class="pause-button" v-show="uploadedOverlayVisible">⏸️</div>
+            <div class="pause-button" v-show="uploadedOverlayVisible" @click="togglePlayPause('uploaded')">⏸️</div>
           </div>
           <div class="seek-bar">
             <!-- 動画がない場合はrangeを無効化する -->
@@ -244,12 +243,24 @@
               uploadedVideoPlayer.play();
             }
           },
+          togglePlayPause(videoType) {
+            const videoPlayer = this.$refs[`${videoType}Video`];
+            if (videoPlayer) {
+              if (videoPlayer.paused) {
+                videoPlayer.play();
+              } else {
+                videoPlayer.pause();
+              }
+              this.toggleOverlay(videoType);
+            }
+          },
+
           toggleOverlay(videoType) {
             this[`${videoType}OverlayVisible`] = !this[`${videoType}OverlayVisible`];
             clearTimeout(this.overlayTimeout);
             this.overlayTimeout = setTimeout(() => {
               this[`${videoType}OverlayVisible`] = false;
-            }, 1000); // 3秒後にフェードアウト
+            }, 1000); // 1秒後にフェードアウト
           },
           changePlaybackRate(event) {
             const rate = event.target.value;
