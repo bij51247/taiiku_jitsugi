@@ -151,7 +151,6 @@
           <div class="video-overlay" v-show="embeddedOverlayVisible"></div>
           <div class="pause-button" v-show="embeddedOverlayVisible" @click="togglePlayPause('embedded')">⏸️</div>
         </div>
-
         <div class="seek-bar">
           <input type="range" min="0" :max="embeddedMax" :value="embeddedCurrent"
             @input="setPosition($event, 'embedded')" step="any">
@@ -186,8 +185,7 @@
 
     <!-- コントロールボタン -->
     <div style="text-align: center;">
-      <button @click="playBothVideos">同時再生</button>
-      <button @click="pauseBothVideos">同時ポーズ</button>
+      <button @click="toggleBothVideos">同時再生/ポーズ</button>
       <label class="switch">
         <input type="checkbox" v-model="loop">
         <span class="slider round"></span>
@@ -230,28 +228,19 @@
               }
             }
           },
-          playBothVideos() {
+          toggleBothVideos() {
             const embeddedVideoPlayer = this.$refs.embeddedVideo;
             const uploadedVideoPlayer = this.$refs.uploadedVideo;
-            if (embeddedVideoPlayer && uploadedVideoPlayer) {
-              // 埋め込み動画の再生位置を設定
-              embeddedVideoPlayer.currentTime = this.embeddedStart / 100 * embeddedVideoPlayer.duration;
-              embeddedVideoPlayer.play();
 
-              // アップロードされた動画の再生位置を設定
-              uploadedVideoPlayer.currentTime = this.uploadedStart / 100 * uploadedVideoPlayer.duration;
-              uploadedVideoPlayer.play();
-            }
-          },
-          togglePlayPause(videoType) {
-            const videoPlayer = this.$refs[`${videoType}Video`];
-            if (videoPlayer) {
-              if (videoPlayer.paused) {
-                videoPlayer.play();
+            if (embeddedVideoPlayer && uploadedVideoPlayer) {
+              if (embeddedVideoPlayer.paused || uploadedVideoPlayer.paused) {
+                // 再生位置の設定を削除
+                embeddedVideoPlayer.play();
+                uploadedVideoPlayer.play();
               } else {
-                videoPlayer.pause();
+                embeddedVideoPlayer.pause();
+                uploadedVideoPlayer.pause();
               }
-              this.toggleOverlay(videoType);
             }
           },
 
