@@ -273,7 +273,7 @@
             const scaleIncrement = 0.1;
             if (event.deltaY < 0) {
               // ホイールアップで拡大
-              this.videoScale = Math.min(this.videoScale + scaleIncrement, 1.5); // 上限を1.5に設定
+              this.videoScale = Math.min(this.videoScale + scaleIncrement, 3); // 上限を3に設定
             } else {
               // ホイールダウンで縮小
               this.videoScale = Math.max(this.videoScale - scaleIncrement, 1); // 下限を1に設定
@@ -289,6 +289,87 @@
               const offsetY = (containerRect.height - videoRect.height) / 2;
               videoElement.style.transformOrigin = `${50 - offsetX / this.videoScale}% ${50 - offsetY / this.videoScale}%`;
             }
+          },
+          handleMouseDown(event, videoType) {
+            if (event.button === 1) { // 中ボタンでのドラッグ
+              this.isDragging = true;
+              this.lastX = event.clientX;
+              this.lastY = event.clientY;
+              this.activeVideo = videoType;
+            }
+          },
+          handleMouseMove(event) {
+            if (this.isDragging) {
+              const deltaX = event.clientX - this.lastX;
+              const deltaY = event.clientY - this.lastY;
+              this.lastX = event.clientX;
+              this.lastY = event.clientY;
+
+              this.scrollVideo(deltaX, deltaY, this.activeVideo);
+            }
+          },
+          handleMouseUp(event) {
+            if (event.button === 1) {
+              this.isDragging = false;
+            }
+          },
+
+          handleTouchStart(event, videoType) {
+            if (event.touches.length === 2) { // 2本指でのタッチ
+              this.isDragging = true;
+              this.lastX = event.touches[0].clientX;
+              this.lastY = event.touches[0].clientY;
+              this.activeVideo = videoType;
+            }
+          },
+          handleTouchMove(event) {
+            if (this.isDragging && event.touches.length === 2) {
+              const deltaX = event.touches[0].clientX - this.lastX;
+              const deltaY = event.touches[0].clientY - this.lastY;
+              this.lastX = event.touches[0].clientX;
+              this.lastY = event.touches[0].clientY;
+
+              this.scrollVideo(deltaX, deltaY, this.activeVideo);
+            }
+          },
+
+          handleTouchEnd(event) {
+            if (this.isDragging && event.touches.length < 2) {
+              this.isDragging = false;
+            }
+          },
+          scrollVideo(deltaX, deltaY, videoType) {
+            if (this.videoScale <= 1) {
+              return; // 拡大率が1倍以下の場合はスクロールしない
+            }
+
+            // videoElementとcontainerを取得
+            const videoElement = this.$refs[`${videoType}Video`];
+            // const container = this.$el.querySelector(`.${videoType}-container`);
+
+            const containerRect = this.$el.querySelector(`.video-box`).getBoundingClientRect();
+            const videoRect = videoElement.getBoundingClientRect();
+
+
+            // 現在の transform スタイルを取得
+            const style = window.getComputedStyle(videoElement);
+            const transform = style.transform || style.webkitTransform || style.mozTransform;
+
+            let matrix = transform.match(/^matrix\((.+)\)$/);
+            let translateX = 0, translateY = 0;
+            if (matrix) {
+              matrix = matrix[1].split(', ');
+              translateX = parseInt(matrix[4]) + deltaX;
+              translateY = parseInt(matrix[5]) + deltaY;
+            }
+
+            // スクロール範囲の制限
+            const scaledWidth = videoRect.width * this.videoScale;
+            const scaledHeight = videoRect.height * this.videoScale;
+            translateX = Math.min(Math.max(translateX, containerRect.width - scaledWidth), 0);
+            translateY = Math.min(Math.max(translateY, containerRect.height - scaledHeight), 0);
+
+            videoElement.style.transform = `matrix(${this.videoScale}, 0, 0, ${this.videoScale}, ${translateX}, ${translateY})`;
           },
 
           toggleOverlay(videoType) {
@@ -419,8 +500,35 @@
 
           const embeddedVideoElement = this.$refs.embeddedVideo;
           const uploadedVideoElement = this.$refs.uploadedVideo;
+
           embeddedVideoElement.addEventListener('wheel', (event) => this.handleZoom(event, 'embedded'));
           uploadedVideoElement.addEventListener('wheel', (event) => this.handleZoom(event, 'uploaded'));
+
+          // embeddedVideoElement（埋め込み動画）に対するイベントリスナーを設定
+          embeddedVideoElement.addEventListener('mousedown', (event) => this.handleMouseDown(event, 'embedded'));
+          embeddedVideoElement.addEventListener('mousemove', (event) => this.handleMouseMove(event, 'embedded'));
+          embeddedVideoElement.addEventListener('mouseup', (event) => this.handleMouseUp(event, 'embedded'));
+          embeddedVideoElement.addEventListener('touchstart', (event) => this.handleTouchStart(event, 'embedded'), { passive: false });
+          embeddedVideoElement.addEventListener('touchmove', (event) => this.handleTouchMove(event, 'embedded'), { passive: false });
+          embeddedVideoElement.addEventListener('touchend', (event) => this.handleTouchEnd(event, 'embedded'));
+
+          // uploadedVideoElement（アップロードされた動画）に対するイベントリスナーを設定
+          uploadedVideoElement.addEventListener('mousedown', (event) => this.handleMouseDown(event, 'uploaded'));
+          uploadedVideoElement.addEventListener('mousemove', (event) => this.handleMouseMove(event, 'uploaded'));
+          uploadedVideoElement.addEventListener('mouseup', (event) => this.handleMouseUp(event, 'uploaded'));
+          uploadedVideoElement.addEventListener('touchstart', (event) => this.handleTouchStart(event, 'uploaded'), { passive: false });
+          uploadedVideoElement.addEventListener('touchmove', (event) => this.handleTouchMove(event, 'uploaded'), { passive: false });
+          uploadedVideoElement.addEventListener('touchend', (event) => this.handleTouchEnd(event, 'uploaded'));
+
+          // ドキュメントに対するマウスイベントリスナーを設定
+          document.addEventListener('mousemove', this.handleMouseMove);
+          document.addEventListener('mouseup', this.handleMouseUp);
+
+          // ドキュメントに対するタッチイベントリスナーを設定
+          document.addEventListener('touchmove', this.handleTouchMove, { passive: false });
+          document.addEventListener('touchend', this.handleTouchEnd);
+
+
         },
         beforeDestroy: function () {
           var embeddedPin = this.$el.querySelector('.embedded-pin');
@@ -432,8 +540,31 @@
 
           const embeddedVideoElement = this.$refs.embeddedVideo;
           const uploadedVideoElement = this.$refs.uploadedVideo;
+
           embeddedVideoElement.removeEventListener('wheel', (event) => this.handleZoom(event, 'embedded'));
           uploadedVideoElement.removeEventListener('wheel', (event) => this.handleZoom(event, 'uploaded'));
+
+          // embeddedVideoElement（埋め込み動画）からイベントリスナーを削除
+          embeddedVideoElement.removeEventListener('mousedown', (event) => this.handleMouseDown(event, 'embedded'));
+          embeddedVideoElement.removeEventListener('mousemove', (event) => this.handleMouseMove(event, 'embedded'));
+          embeddedVideoElement.removeEventListener('mouseup', (event) => this.handleMouseUp(event, 'embedded'));
+          embeddedVideoElement.removeEventListener('touchstart', (event) => this.handleTouchStart(event, 'embedded'), { passive: false });
+          embeddedVideoElement.removeEventListener('touchmove', (event) => this.handleTouchMove(event, 'embedded'), { passive: false });
+          embeddedVideoElement.removeEventListener('touchend', (event) => this.handleTouchEnd(event, 'embedded'));
+
+          // uploadedVideoElement（アップロードされた動画）からイベントリスナーを削除
+          uploadedVideoElement.removeEventListener('mousedown', (event) => this.handleMouseDown(event, 'uploaded'));
+          uploadedVideoElement.removeEventListener('mousemove', (event) => this.handleMouseMove(event, 'uploaded'));
+          uploadedVideoElement.removeEventListener('mouseup', (event) => this.handleMouseUp(event, 'uploaded'));
+          uploadedVideoElement.removeEventListener('touchstart', (event) => this.handleTouchStart(event, 'uploaded'), { passive: false });
+          uploadedVideoElement.removeEventListener('touchmove', (event) => this.handleTouchMove(event, 'uploaded'), { passive: false });
+          uploadedVideoElement.removeEventListener('touchend', (event) => this.handleTouchEnd(event, 'uploaded'));
+
+          // ドキュメントからマウスとタッチイベントリスナーを削除
+          document.removeEventListener('mousemove', this.handleMouseMove);
+          document.removeEventListener('mouseup', this.handleMouseUp);
+          document.removeEventListener('touchmove', this.handleTouchMove, { passive: false });
+          document.removeEventListener('touchend', this.handleTouchEnd);
         }
 
       });
