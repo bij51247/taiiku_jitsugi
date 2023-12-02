@@ -149,7 +149,8 @@
             Your browser does not support HTML5 video.
           </video>
           <div class="video-overlay" v-show="embeddedOverlayVisible"></div>
-          <div class="pause-button" v-show="embeddedOverlayVisible" @click="togglePlayPause('embedded')">⏸️</div>
+          <div class="pause-button" v-show="embeddedOverlayVisible" @click="togglePlayPause('embedded')">{{ isPlaying.embedded ? '⏸️' : '▶️' }}</div>
+
         </div>
         <div class="seek-bar">
           <input type="range" min="0" :max="embeddedMax" :value="embeddedCurrent"
@@ -170,7 +171,8 @@
               Your browser does not support HTML5 video.
             </video>
             <div class="video-overlay" v-show="uploadedOverlayVisible"></div>
-            <div class="pause-button" v-show="uploadedOverlayVisible" @click="togglePlayPause('uploaded')">⏸️</div>
+            <div class="pause-button" v-show="uploadedOverlayVisible" @click="togglePlayPause('uploaded')">{{ isPlaying.uploaded ? '⏸️' : '▶️' }}</div>
+
           </div>
           <div class="seek-bar">
             <!-- 動画がない場合はrangeを無効化する -->
@@ -247,6 +249,7 @@
               }
             }
           },
+
 
           toggleOverlay(videoType) {
             this[`${videoType}OverlayVisible`] = !this[`${videoType}OverlayVisible`];
