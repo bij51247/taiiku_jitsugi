@@ -141,7 +141,7 @@
 <body>
   <div id="app">
     <div class="videos-container">
-
+      <!-- テスト -->
       <div class="video-container">
         <div class="video-box">
           <video ref="embeddedVideo" :src="embeddedVideoSrc" @loadedmetadata="initializeSeekBar('embedded')"
@@ -149,7 +149,8 @@
             Your browser does not support HTML5 video.
           </video>
           <div class="video-overlay" v-show="embeddedOverlayVisible"></div>
-          <div class="pause-button" v-show="embeddedOverlayVisible" @click="togglePlayPause('embedded')">{{ isPlaying.embedded ? '⏸️' : '▶️' }}</div>
+          <div class="pause-button" v-show="embeddedOverlayVisible" @click="togglePlayPause('embedded')">{{
+            isPlaying.embedded ? '⏸️' : '▶️' }}</div>
 
         </div>
         <div class="seek-bar">
@@ -171,7 +172,8 @@
               Your browser does not support HTML5 video.
             </video>
             <div class="video-overlay" v-show="uploadedOverlayVisible"></div>
-            <div class="pause-button" v-show="uploadedOverlayVisible" @click="togglePlayPause('uploaded')">{{ isPlaying.uploaded ? '⏸️' : '▶️' }}</div>
+            <div class="pause-button" v-show="uploadedOverlayVisible" @click="togglePlayPause('uploaded')">{{
+              isPlaying.uploaded ? '⏸️' : '▶️' }}</div>
 
           </div>
           <div class="seek-bar">
